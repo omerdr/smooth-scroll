@@ -27,10 +27,18 @@ final class ScrollProcessor {
             return event
         }
 
+        // At HID level, Shift+Scroll arrives as a vertical event (axis1) — the
+        // axis swap to horizontal happens later at the AppKit layer. Detect the
+        // Shift modifier here and reroute the delta to the horizontal axis so
+        // the animated synthetic event is posted as horizontal, not vertical.
+        let isShiftDown = event.flags.contains(.maskShift)
+        let effectiveDeltaY: Int64 = isShiftDown ? 0 : deltaY
+        let effectiveDeltaX: Int64 = isShiftDown ? deltaY : deltaX
+
         // Feed to animator for smooth interpolation
         animator.addScrollImpulse(
-            deltaY: deltaY,
-            deltaX: deltaX
+            deltaY: effectiveDeltaY,
+            deltaX: effectiveDeltaX
         )
 
         // Suppress original event (return nil)
